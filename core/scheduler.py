@@ -1,70 +1,62 @@
-import os
-import requests
+import time
+import threading
+
+from fetchers.github import fetch_github
+from fetchers.hackerone import fetch_hackerone
+from fetchers.bugcrowd import fetch_bugcrowd
+
+from core.ai_engine import analyze_project
+from database.sqlite import save_project, project_exists
 
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-CHAT_ID = os.getenv("CHAT_ID")
+SCAN_INTERVAL = 600  # 10 minutes
 
 
-def send_telegram_message(text: str):
-    """
-    Send message to Telegram bot
-    """
-    if not BOT_TOKEN or not CHAT_ID:
-        print("[!] Telegram not configured (BOT_TOKEN or CHAT_ID missing)")
+def process_projects(projects, source):
+    if not projects:
         return
 
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    for project in projects:
+        try:
+            url = project.get("url")
 
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": text,
-        "parse_mode": "HTML",
-        "disable_web_page_preview": True
-    }
+            if not url:
+                continue
 
-    try:
-        response = requests.post(url, data=payload, timeout=10)
+            if project_exists(url):
+                continue
 
-        if response.status_code != 200:
-            print(f"[!] Telegram API error: {response.text}")
+            ai_result = analyze_project(project)
+            score = ai_result.get("score", 0)
 
-    except Exception as e:
-        print(f"[!] Telegram request failed: {e}")
+            if score < 5:
+                continue
+
+            save_project(project, source, score)
+
+            print(f"[AI] {url} | Score: {score}")
+
+        except Exception as e:
+            print(f"[ERROR] {source}: {e}")
 
 
-def format_alert(project: dict, ai_result: dict) -> str:
-    """
-    Format ScoutXAI alert message
-    """
+def scan_loop():
+    while True:
+        try:
+            print("[*] Scan cycle started")
 
-    name = project.get("name", "Unknown Project")
-    url = project.get("url", "No URL")
-    score = ai_result.get("score", 0)
-    risks = ai_result.get("risks", [])
-    signals = ai_result.get("signals", [])
+            process_projects(fetch_github(), "github")
+            process_projects(fetch_hackerone(), "hackerone")
+            process_projects(fetch_bugcrowd(), "bugcrowd")
 
-    msg = f"""🚨 <b>ScoutXAI Security Alert</b>
+            print("[*] Scan cycle finished")
 
-📦 <b>Project:</b> {name}
-⭐ <b>AI Score:</b> {score}/100
+        except Exception as e:
+            print(f"[FATAL] {e}")
 
-"""
+        time.sleep(SCAN_INTERVAL)
 
-    if signals:
-        msg += "🧠 <b>Signals:</b>\n"
-        for s in signals:
-            msg += f"• {s}\n"
-        msg += "\n"
 
-    if risks:
-        msg += "⚠️ <b>Risks:</b>\n"
-        for r in risks:
-            msg += f"• {r}\n"
-        msg += "\n"
-    else:
-        msg += "⚠️ <b>Risks:</b> None detected\n\n"
-
-    msg += f"🔗 <b>URL:</b> {url}"
-
-    return msg
+def start_scheduler():
+    thread = threading.Thread(target=scan_loop, daemon=True)
+    thread.start()

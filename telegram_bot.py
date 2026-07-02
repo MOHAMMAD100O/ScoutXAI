@@ -1,52 +1,60 @@
-import logging
 import os
-
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-from fetchers.github import fetch_github_opportunities
-
-TOKEN = os.getenv("BOT_TOKEN")
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.WARNING
-)
+from core.premium import is_premium, add_premium
+from core.scheduler import start_scheduler
 
 
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+
+# ---------------- START ----------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "🚀 ScoutXAI Online\n\n/scan = Get top opportunities"
+        "🚀 Welcome to ScoutXAI\n\n"
+        "Use /status to check access\n"
+        "Use /buy to get premium"
     )
 
 
-async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🔍 Scanning opportunities...")
+# ---------------- STATUS ----------------
+async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
 
-    repos = fetch_github_opportunities()
+    if is_premium(user_id):
+        msg = "✅ You are PREMIUM user"
+    else:
+        msg = "❌ You are FREE user"
 
-    top = repos[:5]
-
-    message = "🔥 TOP OPPORTUNITIES:\n\n"
-
-    for i, item in enumerate(top, 1):
-        message += (
-            f"{i}. {item['name']}\n"
-            f"⭐ Score: {item['score']}\n"
-            f"🔗 {item['url']}\n\n"
-        )
-
-    await update.message.reply_text(message)
+    await update.message.reply_text(msg)
 
 
+# ---------------- BUY (SIMULATED) ----------------
+async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+
+    add_premium(user_id, days=30)
+
+    await update.message.reply_text(
+        "💰 Premium activated for 30 days\n"
+        "Welcome to ScoutXAI Pro 🚀"
+    )
+
+
+# ---------------- MAIN ----------------
 def main():
-    app = Application.builder().token(TOKEN).build()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("scan", scan))
+    app.add_handler(CommandHandler("status", status))
+    app.add_handler(CommandHandler("buy", buy))
 
-    print("🚀 ScoutXAI is running...")
-    app.run_polling(drop_pending_updates=True)
+    # start AI scheduler
+    start_scheduler()
+
+    print("🚀 ScoutXAI Bot is running...")
+    app.run_polling()
 
 
 if __name__ == "__main__":
