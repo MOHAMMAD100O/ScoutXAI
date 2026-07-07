@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/ScoutXAI/telegram_bot.py", line 13, in <module>
+    from scheduler import start_scheduler
+  File "/data/data/com.termux/files/home/ScoutXAI/scheduler.py", line 2, in <module>
+    from scanner_engine import scan_and_notify
+  File "/data/data/com.termux/files/home/ScoutXAI/scanner_engine.py", line 8, in <module>
+    bot = Bot(token=BOT_TOKEN)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/telegram/_bot.py", line 337, in __init__
+    raise InvalidToken("You must pass the token you received from https://t.me/Botfather!")
+telegram.error.InvalidToken: You must pass the token you received from https://t.me/Botfather!

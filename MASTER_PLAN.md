@@ -204,3 +204,239 @@ Always use English for code.
 Use Persian only for explanations.
 
 Focus on reaching a working product as quickly as possible.
+ScoutXAI MASTER PLAN (Production Roadmap)
+
+Vision
+
+ScoutXAI is not a Telegram bot.
+
+ScoutXAI is an AI-powered Opportunity Intelligence Platform.
+
+The Telegram bot is only the first interface.
+
+The final goal is to build a platform that continuously discovers valuable opportunities, ranks them with AI, and delivers them to users before others find them.
+
+---
+
+Current Status
+
+Infrastructure
+
+- GitHub Repository connected
+- Railway deployment active
+- Telegram Bot connected
+- Environment variables configured
+- Scheduler implemented
+- Auto Scanner structure created
+
+---
+
+Existing Modules
+
+- telegram_bot.py
+- scheduler.py
+- scanner_engine.py
+- fetchers/github.py
+- database/users.py
+- database/sqlite.py
+- utils/ranker.py
+
+---
+
+Working Features
+
+- User registration
+- GitHub scanning
+- AI scoring
+- User database
+- Scheduler
+- Railway deployment
+
+---
+
+Current Problems
+
+The project currently contains multiple versions of several modules.
+
+Different implementations have been mixed together over time.
+
+No more patching is allowed.
+
+Every module must have one production version only.
+
+---
+
+Development Rule
+
+Never modify files by adding random snippets.
+
+When a file needs changes, replace the entire file with a clean production version.
+
+One module = One implementation.
+
+---
+
+Product Philosophy
+
+Users should not pay for data.
+
+Users should pay because ScoutXAI finds valuable opportunities before everyone else.
+
+ScoutXAI must save users time and increase their income.
+
+---
+
+Core Value
+
+ScoutXAI should answer:
+
+"What opportunity should I work on today?"
+
+instead of only listing repositories.
+
+---
+
+Opportunity Categories
+
+The platform should discover opportunities in multiple areas.
+
+Examples include:
+
+- GitHub
+- Blockchain
+- Security
+- Bug Bounty
+- AI
+- Startups
+- Open Source
+- Freelance
+- Grants
+- Web3
+- Remote Jobs
+- Funding Programs
+
+Future versions can add more categories.
+
+---
+
+Premium Strategy
+
+The free version must be useful.
+
+The premium version must be irresistible.
+
+Examples:
+
+Free User
+
+- Top opportunities
+- Basic AI score
+- Limited history
+
+Premium User
+
+- Real-time alerts
+- Hidden opportunities
+- AI explanations
+- Advanced filters
+- Daily missions
+- Watchlists
+- Portfolio tracking
+- Unlimited scans
+- Early signals
+
+---
+
+Engagement Strategy
+
+Users should open ScoutXAI every day.
+
+The product should include:
+
+- Daily missions
+- Trending opportunities
+- AI recommendations
+- Personal watchlists
+- Weekly reports
+- Achievement system
+- Streak rewards
+
+---
+
+Platform Expansion
+
+Phase 1
+
+Telegram Bot
+
+↓
+
+Phase 2
+
+Autonomous Scanner
+
+↓
+
+Phase 3
+
+Broadcast Engine
+
+↓
+
+Phase 4
+
+Premium System
+
+↓
+
+Phase 5
+
+Admin Dashboard
+
+↓
+
+Phase 6
+
+Web Platform
+
+↓
+
+Phase 7
+
+Mobile App
+
+---
+
+Revenue Sources
+
+- Premium subscription
+- Company accounts
+- API access
+- Team plans
+- Enterprise plans
+- Sponsored opportunities (clearly labeled)
+- Recruitment partnerships
+
+---
+
+Immediate Goal
+
+Stabilize the core.
+
+The project must become one clean production codebase.
+
+No duplicate modules.
+
+No temporary fixes.
+
+No inconsistent imports.
+
+---
+
+Current Mission
+
+Build ScoutXAI Production Core v2.
+
+After the core is stable, every new feature will be built on top of that foundation.
+
+This document is the source of truth for all future development.

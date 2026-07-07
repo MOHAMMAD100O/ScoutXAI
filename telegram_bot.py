@@ -1,60 +1,82 @@
+import logging
 import os
+import threading
+
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes
 
-from core.premium import is_premium, add_premium
-from core.scheduler import start_scheduler
+from database.users import init_users_db, add_user
+
+# ✅ FIX: اسم درست تابع
+from fetchers.github import fetch_github
+
+from scheduler import start_scheduler
 
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = os.getenv("BOT_TOKEN")
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 
 
 # ---------------- START ----------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+
+    add_user(
+        user.id,
+        user.username or "",
+        user.first_name or "",
+        user.language_code or "en"
+    )
+
     await update.message.reply_text(
         "🚀 Welcome to ScoutXAI\n\n"
-        "Use /status to check access\n"
-        "Use /buy to get premium"
+        "AI Engine is running...\n"
+        "Use /scan to see results."
     )
 
 
-# ---------------- STATUS ----------------
-async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
+# ---------------- SCAN ----------------
+async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🔍 Scanning GitHub...")
 
-    if is_premium(user_id):
-        msg = "✅ You are PREMIUM user"
-    else:
-        msg = "❌ You are FREE user"
+    # ✅ FIX HERE
+    repos = fetch_github()
 
-    await update.message.reply_text(msg)
+    if not repos:
+        await update.message.reply_text("No data found.")
+        return
 
+    message = "🔥 TOP OPPORTUNITIES\n\n"
 
-# ---------------- BUY (SIMULATED) ----------------
-async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
+    for i, item in enumerate(repos[:5], 1):
+        message += (
+            f"{i}. {item.get('name','N/A')}\n"
+            f"⭐ Stars: {item.get('stars',0)}\n"
+            f"🔗 {item.get('url','N/A')}\n\n"
+        )
 
-    add_premium(user_id, days=30)
-
-    await update.message.reply_text(
-        "💰 Premium activated for 30 days\n"
-        "Welcome to ScoutXAI Pro 🚀"
-    )
+    await update.message.reply_text(message)
 
 
 # ---------------- MAIN ----------------
 def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    init_users_db()
+
+    # 🚀 Auto Scanner
+    threading.Thread(target=start_scheduler, daemon=True).start()
+
+    app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("status", status))
-    app.add_handler(CommandHandler("buy", buy))
+    app.add_handler(CommandHandler("scan", scan))
 
-    # start AI scheduler
-    start_scheduler()
+    print("🚀 ScoutXAI is running...")
 
-    print("🚀 ScoutXAI Bot is running...")
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
 
 
 if __name__ == "__main__":

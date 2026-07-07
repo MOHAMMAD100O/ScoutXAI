@@ -1,52 +1,31 @@
-def score_repo(repo):
-    score = 0
+import math
 
+
+def score_repo(repo):
+    """
+    Simple AI scoring engine (stable version)
+    """
+
+    stars = repo.get("stars", 0)
     name = (repo.get("name") or "").lower()
     desc = (repo.get("description") or "").lower()
 
-    stars = repo.get("stargazers_count", 0)
-    forks = repo.get("forks_count", 0)
+    score = 0
 
-    # ⭐ ارزش واقعی = stars + forks
-    score += min(stars / 25, 4)
-    score += min(forks / 40, 2)
+    # ⭐ stars weight
+    score += min(stars / 50, 5)
 
-    text = name + " " + desc
+    # 🧠 keyword boost
+    if "ai" in name or "ai" in desc:
+        score += 3
 
-    # 🧠 سیگنال‌های مهم (واقعی بازار)
-    signals = {
-        "security": 3,
-        "siem": 3,
-        "ai": 2,
-        "machine learning": 2,
-        "automation": 2,
-        "agent": 2,
-        "bot": 1.5,
-        "tool": 1,
-        "framework": 1.5
-    }
+    if "security" in name or "exploit" in desc:
+        score += 4
 
-    # ❌ پروژه‌های بی‌ارزش
-    noise = [
-        "awesome", "list", "cheatsheet",
-        "tutorial", "example", "demo",
-        "learning", "roadmap", "collection"
-    ]
+    if "blockchain" in name or "web3" in desc:
+        score += 3
 
-    for n in noise:
-        if n in text:
-            score -= 2
-
-    for k, v in signals.items():
-        if k in text:
-            score += v
-
-    # 🔥 پروژه‌های واقعی قوی
-    if stars > 100 and forks > 50:
+    if "hack" in name:
         score += 2
-
-    # 🚫 جلوگیری از منفی شدن
-    if score < 0:
-        score = 0
 
     return round(score, 2)
