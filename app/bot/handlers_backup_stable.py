@@ -1,4 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import ContextTypes
 
 from app.database.database import (
@@ -46,6 +46,8 @@ AI Opportunity Intelligence Platform
 
 ScoutXAI discovers valuable opportunities across the AI ecosystem.
 
+Our intelligence engine analyzes:
+
 🧠 AI Projects
 🔍 Open Source Trends
 📈 Emerging Technologies
@@ -65,11 +67,22 @@ ScoutXAI discovers valuable opportunities across the AI ecosystem.
 Commands:
 
 🔥 /top
+Top AI opportunities
+
 🔍 /scan
+Run intelligence scan
+
 💎 /premium
+Unlock advanced intelligence
+
 💳 /buy
+Get Premium access
+
 🎁 /referral
+Invite & earn rewards
+
 📊 /status
+Account information
 
 ━━━━━━━━━━━━━━
 
@@ -91,6 +104,74 @@ Your referral link:
 """
 
     await update.message.reply_text(message)
+
+    user = update.effective_user
+
+    create_user(
+        user.id,
+        user.username
+    )
+
+    plan = get_plan_text(user.id)
+
+    referral_link = (
+        f"https://t.me/{context.bot.username}?start={user.id}"
+    )
+
+    message = f"""
+🚀 Welcome to ScoutXAI
+
+AI Opportunity Intelligence Platform
+
+━━━━━━━━━━━━━━
+
+🔥 What ScoutXAI does:
+
+• Finds valuable AI projects
+• Detects emerging opportunities
+• Ranks projects with AI
+• Delivers intelligence reports
+
+━━━━━━━━━━━━━━
+
+Commands:
+
+/top
+🔥 Top opportunities
+
+/scan
+🔍 Search opportunities
+
+/premium
+💎 Upgrade
+
+/buy
+💳 Create payment
+
+/referral
+🎁 Invite & earn
+
+/status
+📊 Account
+
+━━━━━━━━━━━━━━
+
+👤 Account:
+{user.id}
+
+Plan:
+{plan}
+
+━━━━━━━━━━━━━━
+
+Your referral link:
+
+{referral_link}
+"""
+
+    await update.message.reply_text(message)
+
+
 
 async def top_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
