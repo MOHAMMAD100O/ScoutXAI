@@ -1,0 +1,326 @@
+from telegram import Update
+from telegram.ext import ContextTypes
+
+from app.database.database import (
+    create_user,
+    get_top_opportunities,
+    is_premium_active,
+)
+
+
+def get_plan_text(user_id):
+    if is_premium_active(user_id):
+        return "💎 PREMIUM"
+    return "🆓 FREE"
+
+
+
+async def start_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    user = update.effective_user
+
+    create_user(
+        user.id,
+        user.username
+    )
+
+    plan = get_plan_text(user.id)
+
+    referral_link = (
+        f"https://t.me/{context.bot.username}?start={user.id}"
+    )
+
+    message = f"""
+🚀 Welcome to ScoutXAI
+
+AI Opportunity Intelligence Platform
+
+Your personal AI scout is active.
+
+━━━━━━━━━━━━━━
+
+🔥 Features:
+
+• Finds AI opportunities
+• Detects emerging projects
+• AI ranking engine
+• Intelligence reports
+
+━━━━━━━━━━━━━━
+
+Commands:
+
+/top
+🔥 Top opportunities
+
+/scan
+🔍 Search opportunities
+
+/premium
+💎 Upgrade
+
+/buy
+💳 Buy Premium
+
+/referral
+🎁 Invite & earn
+
+/status
+📊 Account
+
+━━━━━━━━━━━━━━
+
+👤 Account:
+{user.id}
+
+Plan:
+{plan}
+
+━━━━━━━━━━━━━━
+
+Referral link:
+
+{referral_link}
+"""
+
+    await update.message.reply_text(message)
+
+
+
+async def top_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    user = update.effective_user
+
+    premium = is_premium_active(user.id)
+
+    limit = 10 if premium else 3
+
+    opportunities = get_top_opportunities(limit)
+
+
+    if not opportunities:
+
+        await update.message.reply_text(
+            "No intelligence data available."
+        )
+        return
+
+
+    message = """
+🔥 ScoutXAI Intelligence Report
+
+Top AI Opportunities
+
+━━━━━━━━━━━━━━
+"""
+
+
+    for index, item in enumerate(
+        opportunities,
+        start=1
+    ):
+
+        message += (
+            f"#{index} {item['title']}\n"
+            f"⭐ Score: {item['score']}\n"
+            f"🔗 {item['url']}\n\n"
+        )
+
+
+    message += """
+━━━━━━━━━━━━━━
+
+"""
+
+    if not premium:
+
+        message += (
+            "🆓 FREE ACCESS\n"
+            "Showing top 3 opportunities.\n\n"
+            "💎 Premium unlocks full rankings."
+        )
+
+
+    await update.message.reply_text(message)
+
+
+
+async def scan_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    await update.message.reply_text(
+"""
+🔍 ScoutXAI Intelligence Scan
+
+AI engine is searching...
+
+Analyzing:
+
+• AI projects
+• Open source trends
+• Market signals
+
+Results will appear soon.
+"""
+)
+
+
+
+async def premium_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    await update.message.reply_text(
+"""
+💎 ScoutXAI PREMIUM
+
+Unlock full intelligence engine.
+
+🔥 Benefits:
+
+✓ Full opportunity rankings
+✓ Early discoveries
+✓ AI analysis
+✓ Priority alerts
+
+Plans:
+
+Monthly:
+💰 9.99 USDT
+
+Quarterly:
+💰 24.99 USDT
+
+Yearly:
+💰 79.99 USDT
+
+Use:
+/buy
+"""
+)
+
+
+
+async def buy_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    from app.services.payment import create_order
+
+    user = update.effective_user
+
+
+    order = create_order(
+        user.id,
+        "monthly"
+    )
+
+
+    await update.message.reply_text(
+f"""
+💎 ScoutXAI PREMIUM PAYMENT
+
+Plan:
+Monthly Premium
+
+💰 Amount:
+{order.amount} USDT
+
+🌐 Network:
+{order.network}
+
+💳 Wallet:
+
+{order.wallet}
+
+━━━━━━━━━━━━━━
+
+Order ID:
+
+{order.order_id}
+
+⏳ Valid:
+30 minutes
+
+After payment:
+
+/verify {order.order_id} TXID
+"""
+)
+
+
+
+async def referral_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    user = update.effective_user
+
+    link = (
+        f"https://t.me/{context.bot.username}?start={user.id}"
+    )
+
+
+    await update.message.reply_text(
+f"""
+🎁 ScoutXAI Referral Program
+
+Your link:
+
+{link}
+
+━━━━━━━━━━━━━━
+
+👥 Successful invites:
+0
+
+🎁 Rewards:
+Premium rewards
+
+Invite users and unlock benefits.
+"""
+)
+
+
+
+async def status_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    user = update.effective_user
+
+    plan = get_plan_text(user.id)
+
+
+    await update.message.reply_text(
+f"""
+🚀 ScoutXAI Status
+
+System:
+
+✅ AI Engine
+✅ Scanner
+✅ Database
+✅ Telegram Platform
+
+━━━━━━━━━━━━━━
+
+User:
+{user.id}
+
+Plan:
+{plan}
+"""
+)

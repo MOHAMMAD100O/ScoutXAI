@@ -1,0 +1,141 @@
+import sqlite3
+from app.config.settings import BASE_DIR
+
+
+DB_PATH = BASE_DIR / "data" / "scoutxai.db"
+
+
+def get_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_database():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS opportunities
+    (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        url TEXT UNIQUE,
+        source TEXT,
+        description TEXT,
+        score REAL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+def save_opportunity(data):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    INSERT INTO opportunities
+    (
+        name,
+        url,
+        source,
+        description,
+        score
+    )
+    VALUES (?, ?, ?, ?, ?)
+
+    ON CONFLICT(url)
+    DO UPDATE SET
+        name = excluded.name,
+        source = excluded.source,
+        description = excluded.description,
+        score = excluded.score
+    """,
+    (
+        data.get("name"),
+        data.get("url"),
+        data.get("source"),
+        data.get("description"),
+        data.get("score", 0)
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return True
+
+
+def get_top_opportunities(limit=10):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT *
+    FROM opportunities
+    ORDER BY score DESC
+    LIMIT ?
+    """, (limit,))
+
+    result = cursor.fetchall()
+
+    conn.close()
+
+    return result
+def create_user(user_id, username=None):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users
+    (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER UNIQUE,
+        username TEXT,
+        plan TEXT DEFAULT 'free',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cursor.execute("""
+    INSERT OR IGNORE INTO users
+    (
+        user_id,
+        username
+    )
+    VALUES (?, ?)
+    """,
+    (
+        user_id,
+        username
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return True
+
+
+
+def get_user(user_id):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE user_id=?
+        """,
+        (user_id,)
+    )
+
+    user = cursor.fetchone()
+
+    conn.close()
+
+    return user
