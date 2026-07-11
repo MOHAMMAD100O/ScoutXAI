@@ -23,15 +23,9 @@ def main():
 
     print("✅ Scanner Started")
 
-    threading.Thread(
-        target=run_bot,
-        daemon=True
-    ).start()
+    print("🤖 Telegram Bot Starting")
 
-    print("🤖 Telegram Bot Started")
-
-    while True:
-        time.sleep(60)
+    run_bot()
 
 
 if __name__ == "__main__":
