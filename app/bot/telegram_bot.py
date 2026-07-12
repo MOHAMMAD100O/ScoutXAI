@@ -1,5 +1,4 @@
 import os
-import asyncio
 
 from dotenv import load_dotenv
 
@@ -29,10 +28,7 @@ def create_bot():
     if not BOT_TOKEN:
         raise ValueError("BOT_TOKEN missing")
 
-    app = Application.builder().token(
-        BOT_TOKEN
-    ).build()
-
+    app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("top", top_command))
@@ -42,23 +38,17 @@ def create_bot():
     app.add_handler(CommandHandler("scan", scan_command))
     app.add_handler(CommandHandler("referral", referral_command))
 
-
     return app
-
 
 
 def run_bot():
 
     print("🤖 Telegram Bot Started")
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
     app = create_bot()
 
     print("🤖 Telegram Bot Connected")
 
     app.run_polling(
-        drop_pending_updates=True,
-        stop_signals=None
+        drop_pending_updates=True
     )
