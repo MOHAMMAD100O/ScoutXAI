@@ -3,10 +3,7 @@ import logging
 
 from dotenv import load_dotenv
 
-from telegram.ext import (
-    Application,
-    CommandHandler
-)
+from telegram.ext import Application, CommandHandler
 
 from app.bot.handlers import (
     start_command,
@@ -23,6 +20,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -37,13 +35,12 @@ def create_bot():
         Application
         .builder()
         .token(BOT_TOKEN)
-        .connect_timeout(60)
-        .read_timeout(60)
-        .write_timeout(60)
-        .pool_timeout(60)
+        .connect_timeout(120)
+        .read_timeout(120)
+        .write_timeout(120)
+        .pool_timeout(120)
         .build()
     )
-
 
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("top", top_command))
@@ -53,9 +50,7 @@ def create_bot():
     app.add_handler(CommandHandler("scan", scan_command))
     app.add_handler(CommandHandler("referral", referral_command))
 
-
     return app
-
 
 
 def run_bot():
@@ -64,10 +59,10 @@ def run_bot():
 
     app = create_bot()
 
-    print("✅ Bot initialized")
+    print("✅ Telegram Bot Connected")
 
     app.run_polling(
         drop_pending_updates=True,
-        timeout=60,
-        poll_interval=2
+        timeout=120,
+        poll_interval=3
     )
