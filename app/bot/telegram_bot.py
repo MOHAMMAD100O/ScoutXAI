@@ -1,4 +1,5 @@
 import os
+import logging
 
 from dotenv import load_dotenv
 
@@ -6,8 +7,6 @@ from telegram.ext import (
     Application,
     CommandHandler
 )
-
-from telegram.request import HTTPXRequest
 
 from app.bot.handlers import (
     start_command,
@@ -20,6 +19,10 @@ from app.bot.handlers import (
 )
 
 
+logging.basicConfig(
+    level=logging.INFO
+)
+
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -30,49 +33,25 @@ def create_bot():
     if not BOT_TOKEN:
         raise ValueError("BOT_TOKEN missing")
 
-    request = HTTPXRequest(
-        connect_timeout=60,
-        read_timeout=60,
-        write_timeout=60,
-        pool_timeout=60
-    )
-
     app = (
         Application
         .builder()
         .token(BOT_TOKEN)
-        .request(request)
+        .connect_timeout(60)
+        .read_timeout(60)
+        .write_timeout(60)
+        .pool_timeout(60)
         .build()
     )
 
 
-    app.add_handler(
-        CommandHandler("start", start_command)
-    )
-
-    app.add_handler(
-        CommandHandler("top", top_command)
-    )
-
-    app.add_handler(
-        CommandHandler("status", status_command)
-    )
-
-    app.add_handler(
-        CommandHandler("premium", premium_command)
-    )
-
-    app.add_handler(
-        CommandHandler("buy", buy_command)
-    )
-
-    app.add_handler(
-        CommandHandler("scan", scan_command)
-    )
-
-    app.add_handler(
-        CommandHandler("referral", referral_command)
-    )
+    app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("top", top_command))
+    app.add_handler(CommandHandler("status", status_command))
+    app.add_handler(CommandHandler("premium", premium_command))
+    app.add_handler(CommandHandler("buy", buy_command))
+    app.add_handler(CommandHandler("scan", scan_command))
+    app.add_handler(CommandHandler("referral", referral_command))
 
 
     return app
@@ -85,9 +64,10 @@ def run_bot():
 
     app = create_bot()
 
-    print("✅ Telegram Connected")
+    print("✅ Bot initialized")
 
     app.run_polling(
         drop_pending_updates=True,
-        allowed_updates=None
+        timeout=60,
+        poll_interval=2
     )
