@@ -1,4 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import ContextTypes
 
 from app.database.database import (
@@ -10,6 +10,10 @@ from app.database.database import (
 from app.services.payment import (
     create_order,
     available_plans,
+)
+
+from app.services.security_pipeline import (
+    analyze_repository_contracts,
 )
 
 
@@ -31,34 +35,22 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user.username
     )
 
-    plan = get_plan_text(user.id)
-
     referral_link = (
         f"https://t.me/{context.bot.username}?start={user.id}"
     )
 
-    message = f"""
+    await update.message.reply_text(
+f"""
 🚀 Welcome to ScoutXAI
 
 AI Opportunity Intelligence Platform
 
 ━━━━━━━━━━━━━━
 
-ScoutXAI discovers valuable opportunities across the AI ecosystem.
-
-🧠 AI Projects
-🔍 Open Source Trends
-📈 Emerging Technologies
-⚡ Early Opportunity Signals
-
-━━━━━━━━━━━━━━
-
-🔥 Features:
-
-✓ AI-powered opportunity ranking
-✓ Intelligence reports
-✓ Early discovery system
-✓ Continuous opportunity scanning
+🧠 AI Intelligence
+🔍 Smart Scanner
+🛡 Security Research
+📈 Opportunity Discovery
 
 ━━━━━━━━━━━━━━
 
@@ -66,6 +58,7 @@ Commands:
 
 🔥 /top
 🔍 /scan
+🛡 /security
 💎 /premium
 💳 /buy
 🎁 /referral
@@ -73,111 +66,160 @@ Commands:
 
 ━━━━━━━━━━━━━━
 
-👤 Account:
+User:
 {user.id}
 
 Plan:
-{plan}
+{get_plan_text(user.id)}
 
 ━━━━━━━━━━━━━━
 
-Your referral link:
-
+Referral:
 {referral_link}
+"""
+)
+
+
+
+async def security_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not context.args:
+
+        await update.message.reply_text(
+"""
+🛡 ScoutXAI Security Scanner
+
+Usage:
+
+/security github_url
+
+Example:
+
+/security https://github.com/OpenZeppelin/openzeppelin-contracts
+"""
+        )
+        return
+
+
+    repo = context.args[0]
+
+    await update.message.reply_text(
+        "🔍 Scanning Solidity contracts..."
+    )
+
+
+    try:
+
+        reports = analyze_repository_contracts(
+            repo,
+            limit=5
+        )
+
+
+        if not reports:
+
+            await update.message.reply_text(
+                "❌ No contracts found."
+            )
+            return
+
+
+        text = """
+🛡 ScoutXAI Security Report
 
 ━━━━━━━━━━━━━━
-
-🚀 Discover the future of AI with ScoutXAI
 """
 
-    await update.message.reply_text(message)
+
+        for r in reports:
+
+            text += (
+                f"📄 {r['contract']}\n"
+                f"Risk: {r['risk_score']}/100\n"
+                f"Status: {r['status']}\n"
+                f"Findings: {', '.join(r['findings']) if r['findings'] else 'None'}\n"
+                "━━━━━━━━━━━━━━\n"
+            )
+
+
+        await update.message.reply_text(text)
+
+
+    except Exception as e:
+
+        await update.message.reply_text(
+            f"❌ Error:\n{e}"
+        )
+
+
 
 async def top_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
 
-    premium = is_premium_active(user.id)
+    limit = 10 if is_premium_active(user.id) else 3
 
-    limit = 10 if premium else 3
-
-    opportunities = get_top_opportunities(limit)
+    data = get_top_opportunities(limit)
 
 
-    if not opportunities:
+    text = "🔥 ScoutXAI Intelligence Report\n\n"
 
-        await update.message.reply_text(
-            "No intelligence data available."
+
+    for i,item in enumerate(data,1):
+
+        text += (
+            f"⭐ #{i} {item.get('name')}\n"
+            f"Score: {item.get('score')}\n"
+            f"{item.get('url')}\n\n"
         )
-        return
 
 
-    message = """
-🔥 ScoutXAI Intelligence Report
+    await update.message.reply_text(text)
 
-Top AI Opportunities
 
-━━━━━━━━━━━━━━
+
+async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    await update.message.reply_text(
 """
+🔍 ScoutXAI Scan
 
+Searching:
 
-    for index, item in enumerate(opportunities, start=1):
+• AI Projects
+• Web3 Opportunities
+• Security Signals
 
-        message += (
-            f"#{index} {item.get('name','Unknown')}\n"
-            f"⭐ Score: {item['score']}\n"
-            f"🔗 {item['url']}\n\n"
-        )
-
-
-    if not premium:
-
-        message += (
-            "━━━━━━━━━━━━━━\n"
-            "🆓 FREE ACCESS\n"
-            "Showing top 3 opportunities.\n\n"
-            "💎 Premium unlocks full rankings."
-        )
-
-
-    await update.message.reply_text(message)
+Please wait...
+"""
+)
 
 
 
 async def premium_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    message = """
+    await update.message.reply_text(
+"""
 💎 ScoutXAI PREMIUM
 
-Unlock full intelligence engine.
+✅ Full rankings
+✅ Security Scanner
+✅ Early opportunities
+✅ Priority alerts
 
-🔥 Benefits:
+Monthly:
+9.99 USDT
 
-✓ Full opportunity rankings
-✓ Early discoveries
-✓ AI analysis
-✓ Priority alerts
+Quarterly:
+24.99 USDT
 
-
-Available Plans:
-
-Monthly
-💰 9.99 USDT
-⏳ 30 days
-
-Quarterly
-💰 24.99 USDT
-⏳ 90 days
-
-Yearly
-💰 79.99 USDT
-⏳ 365 days
-
+Yearly:
+79.99 USDT
 
 Use:
 /buy
 """
-
-    await update.message.reply_text(message)
+)
 
 
 
@@ -185,66 +227,35 @@ async def buy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
 
-    plans = available_plans()
+    if not context.args:
 
-
-    message = """
-💳 ScoutXAI Payment
-
-Choose your plan:
-
-"""
-
-
-    for name, data in plans.items():
-
-        message += (
-            f"🔥 {name}\n"
-            f"💰 {data['amount']} USDT\n"
-            f"⏳ {data['days']} days\n\n"
+        await update.message.reply_text(
+            str(available_plans())
         )
 
+        return
 
-    message += (
-        "To create order:\n"
-        "/buy monthly\n"
-        "/buy quarterly\n"
-        "/buy yearly"
+
+    order = create_order(
+        user.id,
+        context.args[0]
     )
 
 
-    args = context.args
+    await update.message.reply_text(
+f"""
+✅ Order Created
 
-
-    if args:
-
-        order = create_order(
-            user.id,
-            args[0]
-        )
-
-        message = f"""
-✅ Payment Order Created
-
-Order:
+ID:
 {order.order_id}
 
 Amount:
 {order.amount} USDT
 
-Network:
-{order.network}
-
 Wallet:
-
 {order.wallet}
-
-Status:
-{order.status}
 """
-
-
-    await update.message.reply_text(message)
+)
 
 
 
@@ -252,22 +263,13 @@ async def referral_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
 
-    link = (
-        f"https://t.me/{context.bot.username}?start={user.id}"
-    )
-
     await update.message.reply_text(
-        f"""
-🎁 ScoutXAI Referral Program
+f"""
+🎁 Referral Program
 
-Your link:
-
-{link}
-
-Rewards:
-Invite users → Premium rewards
+https://t.me/{context.bot.username}?start={user.id}
 """
-    )
+)
 
 
 
@@ -275,41 +277,20 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
 
-    plan = get_plan_text(user.id)
-
     await update.message.reply_text(
-        f"""
+f"""
 🚀 ScoutXAI Status
 
-System:
 ✅ AI Engine
-✅ Scanner
 ✅ Database
-✅ Telegram Platform
-
-━━━━━━━━━━━━━━
+✅ Scanner
+✅ Security Analyzer
+✅ Telegram Bot
 
 User:
 {user.id}
 
 Plan:
-{plan}
+{get_plan_text(user.id)}
 """
-    )
-async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    await update.message.reply_text(
-        """
-🔍 ScoutXAI Intelligence Scan
-
-AI engine is searching for new opportunities.
-
-Analyzing:
-
-• AI projects
-• Open source trends
-• Market signals
-
-Results will appear in intelligence feed.
-"""
-    )
+)

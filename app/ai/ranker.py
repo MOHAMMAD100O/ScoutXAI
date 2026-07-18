@@ -11,140 +11,150 @@ def keyword_score(text, keywords, value):
     return score
 
 
-def calculate_score(project):
+def calculate_score(item):
 
     name = (
-        project.get("name")
+        item.get("name")
+        or item.get("title")
         or ""
     ).lower()
 
     description = (
-        project.get("description")
+        item.get("description")
         or ""
     ).lower()
 
     text = name + " " + description
 
 
-    stars = project.get(
-        "stars",
-        0
+    score = 0
+
+
+    # -------------------------
+    # Source Intelligence
+    # -------------------------
+
+    source = (
+        item.get("source")
+        or ""
+    ).lower()
+
+
+    if "github" in source:
+
+        stars = item.get("stars", 0) or 0
+        forks = item.get("forks", 0) or 0
+
+        score += min(
+            math.log1p(stars) * 8,
+            35
+        )
+
+        score += min(
+            math.log1p(forks) * 5,
+            15
+        )
+
+
+    # -------------------------
+    # Bug Bounty / Security
+    # -------------------------
+
+    security_words = [
+        "security",
+        "smart contract",
+        "blockchain",
+        "defi",
+        "web3",
+        "vulnerability",
+        "exploit",
+        "bug bounty",
+        "audit",
+        "cve",
+        "critical",
+        "security researcher"
+    ]
+
+    score += min(
+        keyword_score(
+            text,
+            security_words,
+            8
+        ),
+        40
     )
 
-    forks = project.get(
-        "forks",
-        0
-    )
 
+    # -------------------------
+    # AI Opportunity
+    # -------------------------
 
-    # 1. Growth Signal
-    growth = 0
-
-    growth += min(
-        math.log1p(stars) * 8,
-        35
-    )
-
-    growth += min(
-        math.log1p(forks) * 5,
-        15
-    )
-
-
-    # 2. Innovation Signal
-    innovation_keywords = [
+    ai_words = [
         "ai",
         "agent",
-        "automation",
-        "machine learning",
         "llm",
+        "machine learning",
+        "automation",
         "robot",
         "framework"
     ]
 
-    innovation = keyword_score(
-        text,
-        innovation_keywords,
-        10
-    )
-
-    innovation = min(
-        innovation,
+    score += min(
+        keyword_score(
+            text,
+            ai_words,
+            7
+        ),
         30
     )
 
 
-    # 3. Market Potential
-    market_keywords = [
+    # -------------------------
+    # Market Value
+    # -------------------------
+
+    market_words = [
         "platform",
-        "cloud",
         "api",
-        "workflow",
-        "developer",
+        "cloud",
         "enterprise",
-        "saas"
+        "saas",
+        "infrastructure"
     ]
 
-    market = keyword_score(
-        text,
-        market_keywords,
-        8
-    )
-
-    market = min(
-        market,
-        25
-    )
-
-
-    # 4. Security Value
-    security_keywords = [
-        "security",
-        "cyber",
-        "vulnerability",
-        "exploit",
-        "bug bounty",
-        "cve",
-        "pentest"
-    ]
-
-    security = keyword_score(
-        text,
-        security_keywords,
-        10
-    )
-
-    security = min(
-        security,
-        25
+    score += min(
+        keyword_score(
+            text,
+            market_words,
+            5
+        ),
+        20
     )
 
 
-    # 5. Saturation Risk
-    risk = 0
+    # -------------------------
+    # Reward / Bounty Signal
+    # -------------------------
 
-    famous_words = [
-        "tensorflow",
-        "linux",
-        "react",
-        "kubernetes"
-    ]
-
-    for word in famous_words:
-        if word in text:
-            risk += 15
+    reward = str(
+        item.get("reward")
+        or item.get("max_bounty")
+        or ""
+    ).lower()
 
 
-    final_score = (
-        growth
-        + innovation
-        + market
-        + security
-        - risk
-    )
+    if reward:
+        score += 15
 
+
+    # -------------------------
+    # Final Clamp
+    # -------------------------
 
     return round(
-        max(0, min(final_score, 100)),
+        max(
+            0,
+            min(score, 100)
+        ),
         2
     )

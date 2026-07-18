@@ -1,7 +1,11 @@
 .env
+.envc
+
 venv/
 __pycache__/
 *.pyc
-__pycache__/
-*.pyc
-__pycache__/
+
+*_backup*.py
+*.tar.gz
+
+*.db
