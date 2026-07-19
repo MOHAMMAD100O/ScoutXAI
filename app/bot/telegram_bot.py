@@ -13,10 +13,13 @@ from app.bot.handlers import (
     top_command,
     scan_command,
     security_command,
+    audit_command,
     premium_command,
     buy_command,
     referral_command,
     status_command,
+    targets_command,
+    hunt_command,
 )
 
 
@@ -52,14 +55,12 @@ def create_bot():
         )
     )
 
-
     app.add_handler(
         CommandHandler(
             "top",
             top_command
         )
     )
-
 
     app.add_handler(
         CommandHandler(
@@ -68,7 +69,6 @@ def create_bot():
         )
     )
 
-
     app.add_handler(
         CommandHandler(
             "security",
@@ -76,6 +76,12 @@ def create_bot():
         )
     )
 
+    app.add_handler(
+        CommandHandler(
+            "audit",
+            audit_command
+        )
+    )
 
     app.add_handler(
         CommandHandler(
@@ -84,7 +90,6 @@ def create_bot():
         )
     )
 
-
     app.add_handler(
         CommandHandler(
             "buy",
@@ -92,14 +97,12 @@ def create_bot():
         )
     )
 
-
     app.add_handler(
         CommandHandler(
             "referral",
             referral_command
         )
     )
-
 
     app.add_handler(
         CommandHandler(
@@ -119,9 +122,7 @@ def run_bot():
         "🤖 ScoutXAI Telegram Starting..."
     )
 
-
     app = create_bot()
-
 
     print(
         "✅ Telegram Bot Connected"

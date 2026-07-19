@@ -7,6 +7,8 @@ from app.database.database import (
     is_premium_active,
 )
 
+from app.services.target_service import get_targets
+
 from app.services.payment import (
     create_order,
     available_plans,
@@ -294,3 +296,123 @@ Plan:
 {get_plan_text(user.id)}
 """
 )
+
+
+async def audit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not context.args:
+        await update.message.reply_text(
+            """
+🛡 ScoutXAI Bug Bounty Audit
+
+Usage:
+
+/audit github_repository_url
+
+Example:
+
+/audit https://github.com/OpenZeppelin/openzeppelin-contracts
+"""
+        )
+        return
+
+
+    repository = context.args[0]
+
+    await update.message.reply_text(
+        "🔍 Starting Bug Bounty Security Audit...\nPlease wait..."
+    )
+
+
+    try:
+        from app.bug_bounty.integration import BugBountyEngine
+
+        engine = BugBountyEngine()
+
+        result = engine.run(repository)
+
+        await update.message.reply_text(
+            f"""
+🛡 ScoutXAI Bug Bounty Report
+
+━━━━━━━━━━━━━━
+
+Repository:
+{repository}
+
+Status:
+Audit Completed ✅
+
+Case:
+{result}
+
+━━━━━━━━━━━━━━
+
+Responsible Disclosure Recommended
+"""
+        )
+
+    except Exception as e:
+
+        await update.message.reply_text(
+            f"❌ Audit Error:\n{e}"
+        )
+
+
+from app.services.hunter import hunt_opportunities
+
+
+async def hunt_command(update, context):
+
+    await update.message.reply_text(
+        "🎯 ScoutXAI Hunter Started...\nFinding bounty opportunities..."
+    )
+
+    results = hunt_opportunities()
+
+    if not results:
+        await update.message.reply_text(
+            "No opportunities found."
+        )
+        return
+
+    text = "🔥 ScoutXAI Bounty Targets\n\n"
+
+    for i,r in enumerate(results,1):
+        text += (
+            f"#{i} {r['name']}\n"
+            f"Score: {r['score']}\n"
+            f"{r['url']}\n"
+            f"Status: {r['action']}\n\n"
+        )
+
+    await update.message.reply_text(text)
+
+
+async def targets_command(update, context):
+
+    await update.message.reply_text(
+        "🎯 ScoutXAI Target Hunter Running..."
+    )
+
+    targets = get_targets()
+
+    if not targets:
+        await update.message.reply_text(
+            "No high value targets found."
+        )
+        return
+
+    text = "🔥 High Value Bounty Targets\\n\\n"
+
+    for i,t in enumerate(targets,1):
+
+        text += (
+            f"#{i} {t['name']}\\n"
+            f"Score: {t['score']}\\n"
+            f"{t['url']}\\n"
+            f"Status: {t['priority']}\\n\\n"
+        )
+
+    await update.message.reply_text(text)
+
