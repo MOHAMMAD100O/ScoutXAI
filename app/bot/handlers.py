@@ -18,6 +18,8 @@ from app.services.security_pipeline import (
     analyze_repository_contracts,
 )
 
+from app.ai.daily_picks import generate_daily_picks
+
 
 def get_plan_text(user_id):
 
@@ -45,6 +47,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [
             InlineKeyboardButton("🔥 Top", callback_data="top"),
             InlineKeyboardButton("🔍 Scan", callback_data="scan"),
+            InlineKeyboardButton("🏆 Daily AI Picks", callback_data="daily"),
         ],
         [
             InlineKeyboardButton("🛡 Security", callback_data="security"),
@@ -307,6 +310,32 @@ https://t.me/{context.bot.username}?start={user.id}
 
 
 
+async def daily_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    picks = generate_daily_picks(5)
+
+    text = """
+🏆 ScoutXAI Daily Intelligence
+
+━━━━━━━━━━━━━━
+"""
+
+    for i, item in enumerate(picks, start=1):
+
+        text += f"""
+🥇 #{i}
+{item['name']}
+
+⭐ AI Score: {item['score']}
+
+{item['reason']}
+
+━━━━━━━━━━━━━━
+"""
+
+    await update.message.reply_text(text)
+
+
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
@@ -351,6 +380,29 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🔍 Scanner started...\n"
             "Use /scan for full scan."
         )
+
+    elif data == "daily":
+        picks = generate_daily_picks(5)
+
+        text = """
+🏆 ScoutXAI Daily Intelligence
+
+━━━━━━━━━━━━━━
+"""
+
+        for i, item in enumerate(picks, start=1):
+            text += f"""
+🥇 #{i}
+{item['name']}
+
+⭐ AI Score: {item['score']}
+
+{item['reason']}
+
+━━━━━━━━━━━━━━
+"""
+
+        await query.message.reply_text(text)
 
     elif data == "security":
         await query.message.reply_text(
