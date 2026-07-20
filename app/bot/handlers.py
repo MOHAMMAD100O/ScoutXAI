@@ -1,7 +1,12 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from datetime import datetime
-from app.database.database import activate_premium, get_connection
+from app.database.database import (
+    activate_premium,
+    get_connection,
+    add_referral,
+    get_referral_count,
+)
 
 from app.database.database import (
     create_user,
@@ -38,6 +43,19 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user.id,
         user.username
     )
+
+    if context.args:
+        try:
+            referrer_id = int(context.args[0])
+
+            if referrer_id != user.id:
+                add_referral(
+                    referrer_id,
+                    user.id
+                )
+
+        except Exception:
+            pass
 
     referral_link = (
         f"https://t.me/{context.bot.username}?start={user.id}"
@@ -300,11 +318,31 @@ async def referral_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
 
+    count = get_referral_count(
+        user.id
+    )
+
+    link = (
+        f"https://t.me/{context.bot.username}?start={user.id}"
+    )
+
     await update.message.reply_text(
 f"""
-🎁 Referral Program
+🎁 ScoutXAI Referral Program
 
-https://t.me/{context.bot.username}?start={user.id}
+👥 Invited Users:
+{count}
+
+⭐ Referral Points:
+{count * 10}
+
+━━━━━━━━━━━━━━
+
+🔗 Your Referral Link:
+
+{link}
+
+Invite users and earn rewards 🚀
 """
 )
 
