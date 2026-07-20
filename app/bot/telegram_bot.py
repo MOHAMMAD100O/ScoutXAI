@@ -19,6 +19,9 @@ from app.bot.handlers import (
     referral_command,
     status_command,
     button_handler,
+    verify_command,
+    approve_command,
+    pending_command,
 )
 
 
@@ -109,6 +112,30 @@ def create_bot():
             status_command
         )
     )
+
+    app.add_handler(
+        CommandHandler(
+            "verify",
+            verify_command
+        )
+    )
+
+
+    app.add_handler(
+        CommandHandler(
+            "approve",
+            approve_command
+        )
+    )
+
+
+    app.add_handler(
+        CommandHandler(
+            "pending",
+            pending_command
+        )
+    )
+
 
 
     app.add_handler(

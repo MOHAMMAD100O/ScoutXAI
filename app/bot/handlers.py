@@ -1,5 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
+from datetime import datetime
+from app.database.database import activate_premium, get_connection
 
 from app.database.database import (
     create_user,
@@ -240,7 +242,21 @@ async def buy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
 
         await update.message.reply_text(
-            str(available_plans())
+f"""
+💳 ScoutXAI Payment
+
+Choose plan:
+
+/buy monthly
+/buy quarterly
+/buy yearly
+
+Network:
+BNB Smart Chain (BEP20)
+
+Currency:
+USDT
+"""
         )
 
         return
@@ -254,16 +270,24 @@ async def buy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
 f"""
-✅ Order Created
+✅ Payment Order Created
 
-ID:
+Order ID:
 {order.order_id}
+
+Plan:
+{order.plan}
 
 Amount:
 {order.amount} USDT
 
+Network:
+{order.network}
+
 Wallet:
 {order.wallet}
+
+After payment send TXID.
 """
 )
 
@@ -363,3 +387,131 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🎯 Targets\n"
             "Use /targets"
         )
+
+
+async def verify_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    user = update.effective_user
+
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Usage:\n/verify TXID"
+        )
+        return
+
+    txid = context.args[0]
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO payments
+        (telegram_id, amount, currency, txid, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            user.id,
+            0,
+            "USDT",
+            txid,
+            "PENDING",
+            datetime.utcnow().isoformat()
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+    await update.message.reply_text(
+        f"""
+✅ Payment Submitted
+
+TXID:
+{txid}
+
+Status:
+PENDING
+
+Waiting for approval.
+"""
+    )
+
+
+async def approve_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not context.args:
+        await update.message.reply_text(
+            "Usage: /approve USER_ID"
+        )
+        return
+
+    user_id = int(context.args[0])
+
+    activate_premium(user_id, 30)
+
+    await update.message.reply_text(
+        f"""
+✅ Premium Activated
+
+User:
+{user_id}
+
+Plan:
+PREMIUM
+
+Days:
+30
+"""
+    )
+
+
+ADMIN_ID = 8601933736
+
+
+async def pending_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    user = update.effective_user
+
+    if user.id != ADMIN_ID:
+        await update.message.reply_text(
+            "⛔ Access denied"
+        )
+        return
+
+    from app.database.database import get_connection
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT telegram_id, amount, currency, txid, status, created_at
+        FROM payments
+        WHERE status='PENDING'
+        ORDER BY id DESC
+        """
+    )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    if not rows:
+        await update.message.reply_text(
+            "✅ No pending payments"
+        )
+        return
+
+    text = "💳 Pending Payments\n\n"
+
+    for r in rows:
+        text += f"""
+👤 User: {r[0]}
+💰 Amount: {r[1]} {r[2]}
+🔗 TXID: {r[3]}
+📌 Status: {r[4]}
+🕒 {r[5]}
+
+"""
+
+    await update.message.reply_text(text)
