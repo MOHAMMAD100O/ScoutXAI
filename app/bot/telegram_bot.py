@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from telegram.ext import (
     Application,
     CommandHandler,
+    CallbackQueryHandler,
 )
 
 from app.bot.handlers import (
@@ -17,6 +18,7 @@ from app.bot.handlers import (
     buy_command,
     referral_command,
     status_command,
+    button_handler,
 )
 
 
@@ -106,6 +108,11 @@ def create_bot():
             "status",
             status_command
         )
+    )
+
+
+    app.add_handler(
+        CallbackQueryHandler(button_handler)
     )
 
 

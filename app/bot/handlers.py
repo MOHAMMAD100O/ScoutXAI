@@ -39,6 +39,27 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"https://t.me/{context.bot.username}?start={user.id}"
     )
 
+    keyboard = [
+        [
+            InlineKeyboardButton("🔥 Top", callback_data="top"),
+            InlineKeyboardButton("🔍 Scan", callback_data="scan"),
+        ],
+        [
+            InlineKeyboardButton("🛡 Security", callback_data="security"),
+            InlineKeyboardButton("🎯 Targets", callback_data="targets"),
+        ],
+        [
+            InlineKeyboardButton("💎 Premium", callback_data="premium"),
+            InlineKeyboardButton("📊 Status", callback_data="status"),
+        ],
+        [
+            InlineKeyboardButton("💳 Buy", callback_data="buy"),
+            InlineKeyboardButton("🎁 Referral", callback_data="referral"),
+        ],
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     await update.message.reply_text(
 f"""
 🚀 Welcome to ScoutXAI
@@ -54,18 +75,6 @@ AI Opportunity Intelligence Platform
 
 ━━━━━━━━━━━━━━
 
-Commands:
-
-🔥 /top
-🔍 /scan
-🛡 /security
-💎 /premium
-💳 /buy
-🎁 /referral
-📊 /status
-
-━━━━━━━━━━━━━━
-
 User:
 {user.id}
 
@@ -76,8 +85,9 @@ Plan:
 
 Referral:
 {referral_link}
-"""
-)
+""",
+        reply_markup=reply_markup
+    )
 
 
 
@@ -294,3 +304,62 @@ Plan:
 {get_plan_text(user.id)}
 """
 )
+
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    query = update.callback_query
+    await query.answer()
+
+    data = query.data
+
+    if data == "top":
+        await query.message.reply_text(
+            "🔥 Top Opportunities\n\n"
+            "Use /top to get latest ranking."
+        )
+
+    elif data == "scan":
+        await query.message.reply_text(
+            "🔍 Scanner started...\n"
+            "Use /scan for full scan."
+        )
+
+    elif data == "security":
+        await query.message.reply_text(
+            "🛡 Security Scanner\n"
+            "Use /security <github_url>"
+        )
+
+    elif data == "premium":
+        await query.message.reply_text(
+            "💎 Premium\n"
+            "Use /premium"
+        )
+
+    elif data == "buy":
+        await query.message.reply_text(
+            "💳 Buy Premium\n"
+            "Use /buy"
+        )
+
+    elif data == "referral":
+        await query.message.reply_text(
+            "🎁 Referral\n"
+            "Use /referral"
+        )
+
+    elif data == "status":
+        await query.message.reply_text(
+            "📊 System Status\n"
+            "All systems online."
+        )
+
+    elif data == "targets":
+        await query.message.reply_text(
+            "🎯 Targets\n"
+            "Use /targets"
+        )
