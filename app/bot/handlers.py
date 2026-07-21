@@ -24,6 +24,7 @@ from app.services.security_pipeline import (
 )
 
 from app.ai.daily_picks import generate_daily_picks
+from app.services.live_status import get_live_status
 
 
 def get_plan_text(user_id):
@@ -372,6 +373,16 @@ async def daily_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 """
 
     await update.message.reply_text(text)
+
+
+
+async def live_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    text = get_live_status()
+
+    await update.message.reply_text(
+        text
+    )
 
 
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

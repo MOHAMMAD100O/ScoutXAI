@@ -23,6 +23,7 @@ from app.bot.handlers import (
     approve_command,
     pending_command,
     daily_command,
+    live_command,
 )
 
 
@@ -111,6 +112,14 @@ def create_bot():
         CommandHandler(
             "status",
             status_command
+        )
+    )
+
+
+    app.add_handler(
+        CommandHandler(
+            "live",
+            live_command
         )
     )
 
