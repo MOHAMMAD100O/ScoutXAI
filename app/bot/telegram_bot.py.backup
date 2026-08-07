@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from telegram.ext import (
     Application,
     CommandHandler,
-    CallbackQueryHandler,
 )
 
 from app.bot.handlers import (
@@ -84,37 +83,10 @@ def create_bot():
         CommandHandler("targets", targets_command)
     )
 
-    app.add_handler(
-        CallbackQueryHandler(button_handler)
-    )
-
 
     return app
 
 
-
-
-
-async def button_handler(update, context):
-    query = update.callback_query
-    await query.answer()
-
-    commands = {
-        "top": "/top",
-        "scan": "/scan",
-        "security": "/security",
-        "targets": "/targets",
-        "premium": "/premium",
-        "status": "/status",
-        "buy": "/buy",
-        "referral": "/referral",
-    }
-
-    if query.data in commands:
-        await context.bot.send_message(
-            chat_id=query.message.chat.id,
-            text=commands[query.data]
-        )
 
 def run_bot():
 

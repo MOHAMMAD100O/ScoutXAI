@@ -1,4 +1,4 @@
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from app.database.database import (
@@ -29,7 +29,6 @@ def get_plan_text(user_id):
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     user = update.effective_user
 
     create_user(
@@ -41,12 +40,32 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"https://t.me/{context.bot.username}?start={user.id}"
     )
 
+    keyboard = [
+        [
+            InlineKeyboardButton("🔥 Top", callback_data="top"),
+            InlineKeyboardButton("🔍 Scan", callback_data="scan"),
+        ],
+        [
+            InlineKeyboardButton("🛡 Security", callback_data="security"),
+            InlineKeyboardButton("🎯 Targets", callback_data="targets"),
+        ],
+        [
+            InlineKeyboardButton("💎 Premium", callback_data="premium"),
+            InlineKeyboardButton("📊 Status", callback_data="status"),
+        ],
+        [
+            InlineKeyboardButton("💳 Buy", callback_data="buy"),
+            InlineKeyboardButton("🎁 Referral", callback_data="referral"),
+        ],
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     await update.message.reply_text(
-f"""
+        f"""
 🚀 Welcome to ScoutXAI
 
 AI Opportunity Intelligence Platform
-
 ━━━━━━━━━━━━━━
 
 🧠 AI Intelligence
@@ -56,32 +75,16 @@ AI Opportunity Intelligence Platform
 
 ━━━━━━━━━━━━━━
 
-Commands:
-
-🔥 /top
-🔍 /scan
-🛡 /security
-💎 /premium
-💳 /buy
-🎁 /referral
-📊 /status
-
-━━━━━━━━━━━━━━
-
-User:
-{user.id}
-
-Plan:
-{get_plan_text(user.id)}
+User: {user.id}
+Plan: {get_plan_text(user.id)}
 
 ━━━━━━━━━━━━━━
 
 Referral:
 {referral_link}
-"""
-)
-
-
+""",
+        reply_markup=reply_markup
+    )
 
 async def security_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -416,3 +419,71 @@ async def targets_command(update, context):
 
     await update.message.reply_text(text)
 
+
+
+async def targets_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        from app.services.revenue_engine import RevenueEngine
+
+        engine = RevenueEngine()
+
+        if hasattr(engine, "get_targets"):
+            targets = engine.discover_targets()
+        else:
+            targets = []
+
+        if not targets:
+            await update.message.reply_text(
+                "❌ No revenue targets found yet.\nRun /scan first."
+            )
+            return
+
+        text = "🎯 ScoutXAI Revenue Targets\n"
+        text += "━━━━━━━━━━━━━━\n\n"
+
+        for i, item in enumerate(targets[:10], 1):
+            text += (
+                f"#{i} 🔥 {item.get('name','Unknown')}\n"
+                f"Score: {item.get('score',0)}\n"
+                f"{item.get('url','')}\n\n"
+            )
+
+        await update.message.reply_text(text)
+
+    except Exception as e:
+        await update.message.reply_text(
+            f"❌ Targets Error:\n{e}"
+        )
+
+
+async def targets_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        from app.services.revenue_engine import RevenueEngine
+
+        engine = RevenueEngine()
+        report = engine.discover_targets()
+
+        targets = report.get("targets", [])
+
+        if not targets:
+            await update.message.reply_text(
+                "⚠️ No revenue targets found yet."
+            )
+            return
+
+        text = "🔥 ScoutXAI Revenue Targets\n"
+        text += "━━━━━━━━━━━━━━\n\n"
+
+        for i, item in enumerate(targets[:10], 1):
+            text += (
+                f"#{i} {item.get('name','Unknown')}\n"
+                f"⭐ Score: {item.get('score',0)}\n"
+                f"🔗 {item.get('url','')}\n\n"
+            )
+
+        await update.message.reply_text(text)
+
+    except Exception as e:
+        await update.message.reply_text(
+            f"❌ Targets Error:\n{e}"
+        )
