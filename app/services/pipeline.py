@@ -9,6 +9,9 @@ from app.fetchers.hackerone import fetch_hackerone_programs
 from app.utils.deduplicator import is_duplicate
 from app.utils.security_filter import is_blockchain_security
 
+from app.services.opportunity_radar import (
+    run_opportunity_radar
+)
 
 
 def safe_fetch(name, function, *args):
@@ -24,17 +27,18 @@ def safe_fetch(name, function, *args):
 
         return data
 
-    except Exception as e:
+    except Exception as exc:
 
         print(
-            f"❌ {name} failed: {e}"
+            f"❌ {name} failed: {exc}"
         )
 
         return []
 
 
-
 def normalize(item, source):
+
+    item = dict(item)
 
     item["source"] = source
 
@@ -48,7 +52,6 @@ def normalize(item, source):
         item["url"] = ""
 
     return item
-
 
 
 def get_threshold(source):
@@ -67,24 +70,37 @@ def get_threshold(source):
     return 60
 
 
-
 def run_pipeline():
 
     print(
         "🚀 ScoutXAI Intelligence Pipeline Started"
     )
 
+    # -------------------------------------------------
+    # REAL BOUNTY INTELLIGENCE
+    # -------------------------------------------------
+
+    try:
+
+        run_opportunity_radar()
+
+    except Exception as exc:
+
+        print(
+            f"❌ Opportunity Radar failed: {exc}"
+        )
 
     opportunities = []
 
-
+    # -------------------------------------------------
+    # GITHUB
+    # -------------------------------------------------
 
     github = safe_fetch(
         "GitHub",
         fetch_github_projects,
         60
     )
-
 
     for item in github:
 
@@ -93,18 +109,18 @@ def run_pipeline():
             "GitHub"
         )
 
-
         if is_blockchain_security(item):
 
             opportunities.append(item)
 
-
+    # -------------------------------------------------
+    # IMMUNEFI
+    # -------------------------------------------------
 
     immunefi = safe_fetch(
         "Immunefi",
         fetch_immunefi_programs
     )
-
 
     for item in immunefi:
 
@@ -115,13 +131,14 @@ def run_pipeline():
             )
         )
 
-
+    # -------------------------------------------------
+    # HACKERONE
+    # -------------------------------------------------
 
     hackerone = safe_fetch(
         "HackerOne",
         fetch_hackerone_programs
     )
-
 
     for item in hackerone:
 
@@ -132,37 +149,25 @@ def run_pipeline():
             )
         )
 
-
-
     print(
         f"🧠 Ranking {len(opportunities)} opportunities..."
     )
-
-
 
     saved = 0
 
     seen_hashes = set()
 
-
-
     for item in opportunities:
-
 
         if is_duplicate(
             item,
             seen_hashes
         ):
-
             continue
-
-
 
         score = calculate_score(item)
 
         item["score"] = score
-
-
 
         limit = get_threshold(
             item.get(
@@ -171,34 +176,25 @@ def run_pipeline():
             )
         )
 
-
-
         if score < limit:
-
             continue
 
-
-
         result = save_opportunity(item)
-
-
 
         if result:
 
             saved += 1
 
             print(
-                f"✅ SAVED: {item.get('name')} | Score: {score}"
+                "✅ SAVED: "
+                f"{item.get('name')} | "
+                f"Score: {score}"
             )
-
-
 
     print(
         f"🏁 Pipeline Finished | Saved: {saved}"
     )
 
 
-
 if __name__ == "__main__":
-
     run_pipeline()
